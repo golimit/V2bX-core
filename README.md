@@ -76,8 +76,10 @@ docker-compose up -d
 
 `v2bx_config/` 目录下为默认的 sing-box 内核配置示例：
 
-- `config.json.example` - V2bX 主配置文件示例
-- `sing_origin.json` - sing-box 内核配置示例
+- `config.json` - V2bX 主配置文件
+- `sing_origin.json` - sing-box 内核配置
+- `hy2config.yaml` - Hysteria2 内核配置
+- `geoip.dat` / `geosite.dat` - GeoIP/GeoSite 数据库
 
 **注意：默认配置仅适用于 sing-box 内核，如需使用 xray 或 hysteria2 内核，请参考[官方文档](https://v2bx.v-50.me/)自行配置。**
 
