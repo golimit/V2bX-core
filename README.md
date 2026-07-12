@@ -1,14 +1,11 @@
 # V2bX
 
-[![](https://img.shields.io/badge/TgChat-UnOfficialV2Board%E4%BA%A4%E6%B5%81%E7%BE%A4-green)](https://t.me/unofficialV2board)
-[![](https://img.shields.io/badge/TgChat-YuzukiProjects%E4%BA%A4%E6%B5%81%E7%BE%A4-blue)](https://t.me/YuzukiProjects)
-
 A V2board node server based on multi core, modified from XrayR.  
 一个基于多种内核的V2board节点服务端，修改自XrayR，支持V2ay,Trojan,Shadowsocks协议。
 
 **本仓库由 [golimit](https://github.com/golimit) 维护，基于 [wyx2685/V2bX](https://github.com/wyx2685/V2bX) 二次开发。**
 
-**注意： 本项目需要搭配[修改版V2board](https://github.com/wyx2685/v2board)**
+**开发链路：[InazumaV/V2bX](https://github.com/InazumaV/V2bX)（原作者）→ [wyx2685/V2bX](https://github.com/wyx2685/V2bX)（二开）→ 本仓库（golimit，基于二开的二开）**
 
 ## 特点
 
@@ -83,11 +80,6 @@ docker-compose up -d
 
 **注意：默认配置仅适用于 sing-box 内核，如需使用 xray 或 hysteria2 内核，请参考[官方文档](https://v2bx.v-50.me/)自行配置。**
 
-## 软件安装
-
-### 手动安装
-
-[手动安装教程](https://v2bx.v-50.me/v2bx/v2bx-xia-zai-he-an-zhuang/install/manual)
 
 ## 构建
 ``` bash
