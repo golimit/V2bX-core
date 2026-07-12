@@ -6,7 +6,7 @@
 A V2board node server based on multi core, modified from XrayR.  
 一个基于多种内核的V2board节点服务端，修改自XrayR，支持V2ay,Trojan,Shadowsocks协议。
 
-**本仓库由 [golimit](https://github.com/golimit) 维护，基于 [wyx2685/V2bX](https://github.com/wyx2685/V2bX) 的二次开发版本。**
+**本仓库由 [golimit](https://github.com/golimit) 维护，基于 [wyx2685/V2bX](https://github.com/wyx2685/V2bX) 二次开发。**
 
 **注意： 本项目需要搭配[修改版V2board](https://github.com/wyx2685/v2board)**
 
@@ -85,12 +85,6 @@ docker-compose up -d
 
 ## 软件安装
 
-### 一键安装
-
-```
-wget -N https://raw.githubusercontent.com/wyx2685/V2bX-script/master/install.sh && bash install.sh
-```
-
 ### 手动安装
 
 [手动安装教程](https://v2bx.v-50.me/v2bx/v2bx-xia-zai-he-an-zhuang/install/manual)
@@ -130,20 +124,13 @@ GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 
 * 本人不对任何人使用本项目造成的任何后果承担责任。
 * 本人比较多变，因此本项目可能会随想法或思路的变动随性更改项目结构或大规模重构代码，若不能接受请勿使用。
 
-## 赞助
-
-[赞助链接](https://v-50.me/)
-
 ## Thanks
 
-* [wyx2685](https://github.com/wyx2685) - 原项目作者，感谢其对 V2bX 项目的开创和贡献
+* [InazumaV](https://github.com/InazumaV) - 原项目作者
+* [wyx2685](https://github.com/wyx2685) - 二开作者，感谢其对 V2bX 项目的贡献
 * [Project X](https://github.com/XTLS/)
 * [V2Fly](https://github.com/v2fly)
 * [VNet-V2ray](https://github.com/ProxyPanel/VNet-V2ray)
 * [Air-Universe](https://github.com/crossfw/Air-Universe)
 * [XrayR](https://github.com/XrayR/XrayR)
 * [sing-box](https://github.com/SagerNet/sing-box)
-
-## Stars 增长记录
-
-[![Stargazers over time](https://starchart.cc/wyx2685/V2bX.svg)](https://starchart.cc/wyx2685/V2bX)
