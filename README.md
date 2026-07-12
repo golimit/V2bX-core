@@ -60,6 +60,24 @@ wget -N https://raw.githubusercontent.com/wyx2685/V2bX-script/master/install.sh 
 GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 with_quic with_grpc with_utls with_wireguard with_acme with_gvisor" -trimpath -ldflags "-X 'github.com/InazumaV/V2bX/cmd.version=$version' -s -w -buildid="
 ```
 
+### Go 版本说明
+
+当前推荐使用 Go 1.26.5（Dockerfile 已默认配置）。
+
+**性能优化特性：**
+- Go 1.26 引入 Green Tea GC（垃圾回收器）转正并默认启用
+- 通过改善内存局部性和 CPU 可扩展性，专门优化"大量小对象"的标记和扫描效率
+- GC 开销降低 10%～40%（具体取决于工作负载）
+- 对 Intel Ice Lake / AMD Zen 4 及更新的 CPU，可额外多省约 10%（使用向量指令加速小对象扫描）
+- 对 V2bX 这类高并发代理程序（大量短生命周期小对象分配）特别有效
+- 预期可带来 3%～5% 的端到端延迟改善
+
+**注意事项：**
+- `GOEXPERIMENT=jsonv2` 在 Go 1.26 中仍正常工作
+- 从 Go 1.27 开始，jsonv2 将成为默认行为，`GOEXPERIMENT=jsonv2` 开关语义会翻转（变成"回退到旧实现"的开关）
+- 如遇延迟波动，可用 `GOEXPERIMENT=nogreenteagc` 临时关闭新 GC 做 A/B 对比测试（该开关在 Go 1.27 将移除）
+- 建议生产环境锁定具体小版本（如 `golang:1.26.5-alpine`），避免使用浮动标签导致构建不可复现
+
 ## 配置文件及详细使用教程
 
 [详细使用教程](https://v2bx.v-50.me/)
