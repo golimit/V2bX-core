@@ -1,0 +1,15 @@
+services:
+  v2bx:
+    image: ghcr.io/golimit/v2bx:latest
+    container_name: v2bx
+    network_mode: host
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: '1024m'
+    volumes:
+      - ./config:/etc/V2bX
+    environment:
+      - TZ=Asia/Shanghai
