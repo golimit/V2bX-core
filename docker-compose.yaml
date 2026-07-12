@@ -10,6 +10,6 @@ services:
           cpus: '1'
           memory: '1024m'
     volumes:
-      - ./config:/etc/V2bX
+      - ./v2bx_config:/etc/V2bX
     environment:
       - TZ=Asia/Shanghai

@@ -6,6 +6,8 @@
 A V2board node server based on multi core, modified from XrayR.  
 一个基于多种内核的V2board节点服务端，修改自XrayR，支持V2ay,Trojan,Shadowsocks协议。
 
+**本仓库由 [golimit](https://github.com/golimit) 维护，基于 [wyx2685/V2bX](https://github.com/wyx2685/V2bX) 的二次开发版本。**
+
 **注意： 本项目需要搭配[修改版V2board](https://github.com/wyx2685/v2board)**
 
 ## 特点
@@ -41,6 +43,43 @@ A V2board node server based on multi core, modified from XrayR.
 
 - [ ] 重新实现动态限速
 - [ ] 完善使用文档
+
+## Docker 镜像
+
+| Tag | 说明 | 适用场景 |
+|-----|------|----------|
+| `latest` | 稳定版（默认） | 生产环境推荐 |
+| `dev` | 开发版 | 测试新功能 |
+
+```bash
+# 拉取稳定版
+docker pull ghcr.io/golimit/v2bx:latest
+
+# 拉取开发版
+docker pull ghcr.io/golimit/v2bx:dev
+```
+
+### docker-compose 部署
+
+```bash
+# 下载配置文件
+wget https://raw.githubusercontent.com/golimit/V2bx-core/dev/docker-compose.yaml
+
+# 编辑配置
+vi v2bx_config/config.json
+
+# 启动服务
+docker-compose up -d
+```
+
+## 配置说明
+
+`v2bx_config/` 目录下为默认的 sing-box 内核配置示例：
+
+- `config.json.example` - V2bX 主配置文件示例
+- `sing_origin.json` - sing-box 内核配置示例
+
+**注意：默认配置仅适用于 sing-box 内核，如需使用 xray 或 hysteria2 内核，请参考[官方文档](https://v2bx.v-50.me/)自行配置。**
 
 ## 软件安装
 
@@ -95,6 +134,7 @@ GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 
 
 ## Thanks
 
+* [wyx2685](https://github.com/wyx2685) - 原项目作者，感谢其对 V2bX 项目的开创和贡献
 * [Project X](https://github.com/XTLS/)
 * [V2Fly](https://github.com/v2fly)
 * [VNet-V2ray](https://github.com/ProxyPanel/VNet-V2ray)
