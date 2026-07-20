@@ -87,6 +87,27 @@ docker-compose up -d
 GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 with_quic with_grpc with_utls with_wireguard with_acme with_gvisor" -trimpath -ldflags "-X 'github.com/InazumaV/V2bX/cmd.version=$version' -s -w -buildid="
 ```
 
+### 本地依赖：sing-box_mod
+
+本项目的 sing 内核依赖定制仓库 [golimit/sing-box_mod](https://github.com/golimit/sing-box_mod)（基于官方 sing-box，增加 V2bX 用户增删等接口）。
+
+该仓库**不作为 git submodule 提交**，而是 clone 到本项目根目录下的 `sing-box_mod/`，并由 `.gitignore` 忽略，便于本地联调、独立提交推送。
+
+```bash
+# 克隆（默认使用与 go.mod replace 对齐的分支）
+git clone -b v1.13.14-mod git@github.com:golimit/sing-box_mod.git sing-box_mod
+
+# 本地开发时，临时把 go.mod 的 replace 改为本地路径：
+# replace github.com/sagernet/sing-box v1.13.14 => ./sing-box_mod
+#
+# 改完 sing-box_mod 后：
+# 1. 在 sing-box_mod/ 内 commit & push
+# 2. 恢复/更新 go.mod 的远程 replace 伪版本（指向新 commit）
+# 3. 在本仓库执行 go mod tidy 并提交 go.mod / go.sum
+```
+
+生产构建仍使用 `go.mod` 中的远程 `replace`，不依赖本地目录。
+
 ### Go 版本说明
 
 当前推荐使用 Go 1.26.5（Dockerfile 已默认配置）。
@@ -126,3 +147,4 @@ GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 
 * [Air-Universe](https://github.com/crossfw/Air-Universe)
 * [XrayR](https://github.com/XrayR/XrayR)
 * [sing-box](https://github.com/SagerNet/sing-box)
+* [golimit/sing-box_mod](https://github.com/golimit/sing-box_mod) - 本项目使用的 sing-box 定制内核

@@ -17,3 +17,6 @@ output/*
 newV2bX.sh
 quic_singbox.sh
 build-and-push.sh
+
+# 本地依赖仓库（独立 git 仓库，勿提交到本项目）
+sing-box_mod/
