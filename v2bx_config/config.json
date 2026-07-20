@@ -30,6 +30,15 @@
             "ReportMinTraffic": 0,
             "EnableTFO": true,
             "EnableSniff": true,
+            "LimitConfig": {
+                "EnableDynamicSpeedLimit": false,
+                "DynamicSpeedLimitConfig": {
+                    "Periodic": 60,
+                    "Traffic": 1073741824,
+                    "SpeedLimit": 10,
+                    "ExpireTime": 30
+                }
+            },
             "CertConfig": {
                 "CertMode": "none",
                 "RejectUnknownSni": false,
