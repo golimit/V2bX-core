@@ -361,4 +361,4 @@ replace github.com/sagernet/sing-box v1.13.14 => github.com/golimit/sing-box_mod
 
 replace github.com/xtls/xray-core v1.251202.0 => github.com/golimit/xray-core v0.0.0-20251202200223-63db1dc9e9e2
 
-replace github.com/wyx2685/sing-vmess v0.0.0-20250723121437-95d5ab59ff92 => github.com/golimit/sing-vmess v0.0.0-20250723121437-95d5ab59ff92
+replace github.com/sagernet/sing-vmess => github.com/golimit/sing-vmess v0.0.0-20260720132617-7875b864a9ba

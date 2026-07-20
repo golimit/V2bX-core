@@ -95,7 +95,7 @@ GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 
 |----------|----------|------------------|------|
 | `sing-box_mod/` | [golimit/sing-box_mod](https://github.com/golimit/sing-box_mod) | `sagernet/sing-box` → `golimit/sing-box_mod` | sing 内核（含 V2bX 用户增删等） |
 | `xray-core/` | [golimit/xray-core](https://github.com/golimit/xray-core) | `xtls/xray-core` → `golimit/xray-core` | xray 内核 |
-| `sing-vmess/` | [golimit/sing-vmess](https://github.com/golimit/sing-vmess) | `wyx2685/sing-vmess` → `golimit/sing-vmess` | VMess/VLESS 协议库（fork） |
+| `sing-vmess/` | [golimit/sing-vmess](https://github.com/golimit/sing-vmess) | `sagernet/sing-vmess` → `golimit/sing-vmess` | VMess/VLESS 协议库（自维护 fork） |
 
 ```bash
 # 一次性克隆（分支/提交与当前 go.mod 对齐）
@@ -103,7 +103,7 @@ git clone -b v1.13.14-mod git@github.com:golimit/sing-box_mod.git sing-box_mod
 git clone -b main git@github.com:golimit/xray-core.git xray-core
 # xray-core 建议再切到 go.mod 锁定的 commit：
 #   cd xray-core && git checkout 63db1dc9e9e2 && git switch -c v2bx-pin
-git clone -b dev git@github.com:golimit/sing-vmess.git sing-vmess
+git clone -b main git@github.com:golimit/sing-vmess.git sing-vmess
 ```
 
 **本地联调（临时改 replace，勿把本地路径提交进生产 CI）：**
@@ -112,14 +112,15 @@ git clone -b dev git@github.com:golimit/sing-vmess.git sing-vmess
 // go.mod
 replace github.com/sagernet/sing-box v1.13.14 => ./sing-box_mod
 replace github.com/xtls/xray-core v1.251202.0 => ./xray-core
-replace github.com/wyx2685/sing-vmess v0.0.0-20250723121437-95d5ab59ff92 => ./sing-vmess
+replace github.com/sagernet/sing-vmess => ./sing-vmess
 ```
 
 说明：
 
 - 生产/CI 仍使用远程伪版本 `replace`，不依赖本地目录。
 - 改完子仓库后：在子仓库内 commit & push → 更新本仓库 `go.mod`/`go.sum` 的远程 replace → 提交本仓库。
-- 当前构建实际走的 VMess/VLESS 库是 `github.com/sagernet/sing-vmess`（经 sing-box 间接依赖）。`golimit/sing-vmess` 的 module path 仍为 `github.com/wyx2685/sing-vmess`；若要让本地 `sing-vmess/` 生效到 sing 数据面，需额外把 `github.com/sagernet/sing-vmess` replace 到本地（并注意 module path 对齐），或先在 `sing-box_mod/go.mod` 里做同样的本地 replace。
+- `golimit/sing-vmess` 为兼容 drop-in replace，**go.mod 内 module path 仍声明为** `github.com/sagernet/sing-vmess`（代码从 [golimit/sing-vmess](https://github.com/golimit/sing-vmess) 拉取）。这是 Go 模块机制要求：同一份代码不能同时作为两个 module path。
+- `sing-box_mod` 内也有同样的 `sing-vmess` replace，便于单独编译该内核。
 
 ### Go 版本说明
 
