@@ -476,8 +476,8 @@ github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db/go.mod h1:/XxbfmMg8l
 github.com/golang/snappy v0.0.1/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/golang/snappy v0.0.3/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/golang/snappy v0.0.4/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
-github.com/golimit/sing-box_mod v1.13.14-0.20260712130708-7a2f78c5f13b h1:lZLXbLA4WZ5wYKc531qlMoSJWGVhXmYdIDEJ3TI81HY=
-github.com/golimit/sing-box_mod v1.13.14-0.20260712130708-7a2f78c5f13b/go.mod h1:x2RG4KiOiMq5WwBzL0pRQpBTWc2EpXFlw5w+HUmZszs=
+github.com/golimit/sing-box_mod v1.13.15-0.20260720125045-533dad01b645 h1:P30NqCUR/GexCKLwXFblV4qqH8eE44cXPH8j51PzFIo=
+github.com/golimit/sing-box_mod v1.13.15-0.20260720125045-533dad01b645/go.mod h1:x2RG4KiOiMq5WwBzL0pRQpBTWc2EpXFlw5w+HUmZszs=
 github.com/golimit/xray-core v0.0.0-20251202200223-63db1dc9e9e2 h1:y8K9LVi+YJQ/1VvS01xM2P0wR29dw/fF57Hlht6j9Ls=
 github.com/golimit/xray-core v0.0.0-20251202200223-63db1dc9e9e2/go.mod h1:yTB/iXzdo38F+nUYbjD5Eys88SP6N2zd0jyEmrBB37U=
 github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c/go.mod h1:lNA+9X1NB3Zf8V7Ke586lFgjr2dZNuvo3lPJSGZ5JPQ=
