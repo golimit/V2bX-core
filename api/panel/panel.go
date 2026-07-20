@@ -54,6 +54,11 @@ func New(c *conf.ApiConfig) (*Client, error) {
 		}
 	})
 	client.SetBaseURL(c.APIHost)
+	if !strings.HasPrefix(strings.ToLower(c.APIHost), "https://") &&
+		!strings.HasPrefix(strings.ToLower(c.APIHost), "http://127.0.0.1") &&
+		!strings.HasPrefix(strings.ToLower(c.APIHost), "http://localhost") {
+		return nil, fmt.Errorf("APIHost must use HTTPS except for localhost")
+	}
 	// Check node type
 	c.NodeType = strings.ToLower(c.NodeType)
 	switch c.NodeType {
@@ -72,6 +77,7 @@ func New(c *conf.ApiConfig) (*Client, error) {
 		return nil, fmt.Errorf("unsupported Node type: %s", c.NodeType)
 	}
 	// set params
+	client.SetHeader("Authorization", c.Key)
 	client.SetQueryParams(map[string]string{
 		"node_type": c.NodeType,
 		"node_id":   strconv.Itoa(c.NodeID),

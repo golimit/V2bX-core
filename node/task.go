@@ -88,12 +88,13 @@ func (c *Controller) nodeInfoMonitor() (err error) {
 		newA = nil
 	}
 	if newN != nil {
+		oldUserList := c.userList
+		oldInfo := c.info
 		c.info = newN
+		var removed []panel.UserInfo
 		if newU != nil {
+			removed, _ = compareUserList(oldUserList, newU)
 			c.userList = newU
-		}
-		if c.traffic != nil {
-			c.traffic.reset()
 		}
 		log.WithField("tag", c.tag).Info("Node changed, reload")
 		if err = c.flushUserTraffic(); err != nil {
@@ -102,6 +103,24 @@ func (c *Controller) nodeInfoMonitor() (err error) {
 				"err": err,
 			}).Error("Abort node reload: flush traffic failed")
 			return nil
+		}
+		if c.traffic != nil {
+			c.traffic.reset()
+		}
+		if len(removed) > 0 && oldInfo != nil {
+			if err = c.server.DelUsers(removed, c.tag, oldInfo); err != nil {
+				log.WithFields(log.Fields{
+					"tag": c.tag,
+					"err": err,
+				}).Error("Delete users before node reload failed")
+				return nil
+			}
+			c.limiter.UpdateUser(c.tag, nil, removed)
+			if c.traffic != nil {
+				for i := range removed {
+					c.traffic.remove(removed[i].Uuid)
+				}
+			}
 		}
 		err = c.server.DelNode(c.tag)
 		if err != nil {

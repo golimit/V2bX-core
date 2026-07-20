@@ -6,6 +6,7 @@ import (
 	"github.com/InazumaV/V2bX/api/panel"
 	"github.com/InazumaV/V2bX/conf"
 	vCore "github.com/InazumaV/V2bX/core"
+	log "github.com/sirupsen/logrus"
 )
 
 type Node struct {
@@ -39,9 +40,8 @@ func (n *Node) Start(nodes []conf.NodeConfig, core vCore.Core) error {
 
 func (n *Node) Close() {
 	for _, c := range n.controllers {
-		err := c.Close()
-		if err != nil {
-			panic(err)
+		if err := c.Close(); err != nil {
+			log.WithField("err", err).Error("Close node controller failed")
 		}
 	}
 	n.controllers = nil

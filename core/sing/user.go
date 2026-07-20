@@ -3,9 +3,12 @@ package sing
 import (
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/InazumaV/V2bX/api/panel"
 	"github.com/InazumaV/V2bX/common/counter"
+	"github.com/InazumaV/V2bX/common/format"
 	"github.com/InazumaV/V2bX/core"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing-box/protocol/anytls"
@@ -22,11 +25,6 @@ func (b *Sing) AddUsers(p *core.AddUsersParams) (added int, err error) {
 	in, found := b.box.Inbound().Get(p.Tag)
 	if !found {
 		return 0, errors.New("the inbound not found")
-	}
-	b.users.mapLock.Lock()
-	defer b.users.mapLock.Unlock()
-	for i := range p.Users {
-		b.users.uidMap[p.Users[i].Uuid] = p.Users[i].Id
 	}
 	switch p.NodeInfo.Type {
 	case "vless":
@@ -114,11 +112,18 @@ func (b *Sing) AddUsers(p *core.AddUsersParams) (added int, err error) {
 			}
 		}
 		err = in.(*anytls.Inbound).AddUsers(us)
+	default:
+		return 0, fmt.Errorf("unsupported node type: %s", p.NodeInfo.Type)
 	}
 	if err != nil {
 		return 0, err
 	}
-	return len(p.Users), err
+	b.users.mapLock.Lock()
+	for i := range p.Users {
+		b.users.uidMap[format.UserTag(p.Tag, p.Users[i].Uuid)] = p.Users[i].Id
+	}
+	b.users.mapLock.Unlock()
+	return len(p.Users), nil
 }
 
 func (b *Sing) GetUserTraffic(tag, uuid string, reset bool) (up int64, down int64) {
@@ -153,7 +158,8 @@ func (b *Sing) GetUserTrafficSlice(tag string, reset bool) ([]panel.UserTraffic,
 				down = traffic.DownCounter.Load()
 			}
 			if up+down > b.nodeReportMinTrafficBytes[tag] {
-				if b.users.uidMap[uuid] == 0 {
+				userKey := format.UserTag(tag, uuid)
+				if b.users.uidMap[userKey] == 0 {
 					if reset && (up != 0 || down != 0) {
 						// invalid user: drop counters, do not report
 					}
@@ -161,7 +167,7 @@ func (b *Sing) GetUserTrafficSlice(tag string, reset bool) ([]panel.UserTraffic,
 					return true
 				}
 				trafficSlice = append(trafficSlice, panel.UserTraffic{
-					UID:      b.users.uidMap[uuid],
+					UID:      b.users.uidMap[userKey],
 					Upload:   up,
 					Download: down,
 				})
@@ -192,8 +198,11 @@ func (b *Sing) AddUserTraffic(tag string, report []panel.UserTraffic) {
 	b.users.mapLock.RLock()
 	defer b.users.mapLock.RUnlock()
 	uidToUUID := make(map[int]string, len(b.users.uidMap))
-	for uuid, uid := range b.users.uidMap {
-		uidToUUID[uid] = uuid
+	prefix := tag + "|"
+	for userKey, uid := range b.users.uidMap {
+		if strings.HasPrefix(userKey, prefix) {
+			uidToUUID[uid] = strings.TrimPrefix(userKey, prefix)
+		}
 	}
 	for i := range report {
 		uuid, ok := uidToUUID[report[i].UID]
@@ -240,7 +249,7 @@ func (b *Sing) DelUsers(users []panel.UserInfo, tag string, info *panel.NodeInfo
 			c := v.(*counter.TrafficCounter)
 			c.Delete(users[i].Uuid)
 		}
-		delete(b.users.uidMap, users[i].Uuid)
+		delete(b.users.uidMap, format.UserTag(tag, users[i].Uuid))
 		uuids[i] = users[i].Uuid
 	}
 	err := del.DelUsers(uuids)

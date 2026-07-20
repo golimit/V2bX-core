@@ -1,16 +1,29 @@
 package conf
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"encoding/json"
 
 	"github.com/InazumaV/V2bX/common/json5"
 )
+
+var includeHTTPClient = &http.Client{
+	Timeout: 30 * time.Second,
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 3 {
+			return fmt.Errorf("too many redirects while fetching include config")
+		}
+		return nil
+	},
+}
 
 type NodeConfig struct {
 	ApiConfig ApiConfig `json:"-"`
@@ -43,14 +56,32 @@ func (n *NodeConfig) UnmarshalJSON(data []byte) (err error) {
 		include := rn.Include
 		switch {
 		case strings.HasPrefix(include, "http://") || strings.HasPrefix(include, "https://"):
-			rsp, err := http.Get(include)
+			parsed, err := url.Parse(include)
+			if err != nil {
+				return fmt.Errorf("parse include url error: %s", err)
+			}
+			if parsed.Scheme != "http" && parsed.Scheme != "https" {
+				return fmt.Errorf("unsupported include url scheme: %s", parsed.Scheme)
+			}
+			if parsed.Host == "" {
+				return fmt.Errorf("include url missing host")
+			}
+			rsp, err := includeHTTPClient.Get(include)
 			if err != nil {
 				return err
 			}
 			defer rsp.Body.Close()
-			data, err = io.ReadAll(json5.NewTrimNodeReader(rsp.Body))
+			if rsp.StatusCode < 200 || rsp.StatusCode >= 300 {
+				return fmt.Errorf("fetch include config failed: status %d", rsp.StatusCode)
+			}
+			const maxIncludeSize = 4 << 20
+			data, err = io.ReadAll(io.LimitReader(rsp.Body, maxIncludeSize))
 			if err != nil {
-				return fmt.Errorf("open include file error: %s", err)
+				return fmt.Errorf("read include config error: %s", err)
+			}
+			data, err = io.ReadAll(json5.NewTrimNodeReader(bytes.NewReader(data)))
+			if err != nil {
+				return fmt.Errorf("parse include config error: %s", err)
 			}
 		default:
 			// trim optional "file:" prefix

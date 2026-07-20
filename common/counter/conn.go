@@ -33,42 +33,19 @@ func NewConnCounter(conn net.Conn, s *TrafficStorage) net.Conn {
 }
 
 func (c *ConnCounter) Read(b []byte) (n int, err error) {
-	n, err = c.ExtendedConn.Read(b)
-	if n > 0 {
-		c.storage.UpCounter.Add(int64(n))
-	}
-	return
+	return c.ExtendedConn.Read(b)
 }
 
 func (c *ConnCounter) Write(b []byte) (n int, err error) {
-	n, err = c.ExtendedConn.Write(b)
-	if n > 0 {
-		c.storage.DownCounter.Add(int64(n))
-	}
-	return
+	return c.ExtendedConn.Write(b)
 }
 
 func (c *ConnCounter) ReadBuffer(buffer *buf.Buffer) error {
-	err := c.ExtendedConn.ReadBuffer(buffer)
-	if err != nil {
-		return err
-	}
-	if buffer.Len() > 0 {
-		c.storage.UpCounter.Add(int64(buffer.Len()))
-	}
-	return nil
+	return c.ExtendedConn.ReadBuffer(buffer)
 }
 
 func (c *ConnCounter) WriteBuffer(buffer *buf.Buffer) error {
-	dataLen := int64(buffer.Len())
-	err := c.ExtendedConn.WriteBuffer(buffer)
-	if err != nil {
-		return err
-	}
-	if dataLen > 0 {
-		c.storage.DownCounter.Add(dataLen)
-	}
-	return nil
+	return c.ExtendedConn.WriteBuffer(buffer)
 }
 
 func (c *ConnCounter) UnwrapReader() (io.Reader, []network.CountFunc) {
@@ -108,24 +85,11 @@ func NewPacketConnCounter(conn network.PacketConn, s *TrafficStorage) network.Pa
 }
 
 func (p *PacketConnCounter) ReadPacket(buff *buf.Buffer) (destination M.Socksaddr, err error) {
-	destination, err = p.PacketConn.ReadPacket(buff)
-	if err != nil {
-		return
-	}
-	p.storage.UpCounter.Add(int64(buff.Len()))
-	return
+	return p.PacketConn.ReadPacket(buff)
 }
 
 func (p *PacketConnCounter) WritePacket(buff *buf.Buffer, destination M.Socksaddr) (err error) {
-	n := buff.Len()
-	err = p.PacketConn.WritePacket(buff, destination)
-	if err != nil {
-		return
-	}
-	if n > 0 {
-		p.storage.DownCounter.Add(int64(n))
-	}
-	return
+	return p.PacketConn.WritePacket(buff, destination)
 }
 
 func (p *PacketConnCounter) UnwrapPacketReader() (network.PacketReader, []network.CountFunc) {

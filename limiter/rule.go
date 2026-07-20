@@ -7,7 +7,8 @@ import (
 )
 
 func (l *Limiter) CheckDomainRule(destination string) (reject bool) {
-	// have rule
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 	for i := range l.DomainRules {
 		if l.DomainRules[i].MatchString(destination) {
 			reject = true
@@ -18,6 +19,8 @@ func (l *Limiter) CheckDomainRule(destination string) (reject bool) {
 }
 
 func (l *Limiter) CheckProtocolRule(protocol string) (reject bool) {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
 	for i := range l.ProtocolRules {
 		if l.ProtocolRules[i] == protocol {
 			reject = true
@@ -28,10 +31,13 @@ func (l *Limiter) CheckProtocolRule(protocol string) (reject bool) {
 }
 
 func (l *Limiter) UpdateRule(rule *panel.Rules) error {
-	l.DomainRules = make([]*regexp.Regexp, len(rule.Regexp))
+	domainRules := make([]*regexp.Regexp, len(rule.Regexp))
 	for i := range rule.Regexp {
-		l.DomainRules[i] = regexp.MustCompile(rule.Regexp[i])
+		domainRules[i] = regexp.MustCompile(rule.Regexp[i])
 	}
+	l.mu.Lock()
+	l.DomainRules = domainRules
 	l.ProtocolRules = rule.Protocol
+	l.mu.Unlock()
 	return nil
 }

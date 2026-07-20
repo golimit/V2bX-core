@@ -14,7 +14,7 @@ func (c *Controller) reportUserTrafficTask() (err error) {
 			"tag": c.tag,
 			"err": err,
 		}).Error("Get user traffic failed")
-		return nil
+		return err
 	}
 	if len(userTraffic) > 0 {
 		if err = c.apiClient.ReportUserTraffic(userTraffic); err != nil {
@@ -116,15 +116,19 @@ func (c *Controller) accumulateDynamicTraffic(userTraffic []panel.UserTraffic) {
 	}
 }
 
+func userListKey(user panel.UserInfo) string {
+	return strconv.Itoa(user.Id) + "|" + user.Uuid + "|" +
+		strconv.Itoa(user.SpeedLimit) + "|" + strconv.Itoa(user.DeviceLimit)
+}
+
 func compareUserList(old, new []panel.UserInfo) (deleted, added []panel.UserInfo) {
 	oldMap := make(map[string]int)
 	for i, user := range old {
-		key := user.Uuid + strconv.Itoa(user.SpeedLimit) + "|" + strconv.Itoa(user.DeviceLimit)
-		oldMap[key] = i
+		oldMap[userListKey(user)] = i
 	}
 
 	for _, user := range new {
-		key := user.Uuid + strconv.Itoa(user.SpeedLimit) + "|" + strconv.Itoa(user.DeviceLimit)
+		key := userListKey(user)
 		if _, exists := oldMap[key]; !exists {
 			added = append(added, user)
 		} else {

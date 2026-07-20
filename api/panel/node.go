@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -157,8 +156,23 @@ func (c *Client) GetNodeInfo() (node *NodeInfo, err error) {
 		ForceContentType("application/json").
 		Get(path)
 
+	if r == nil {
+		if err != nil {
+			return nil, fmt.Errorf("get node info: %w", err)
+		}
+		return nil, fmt.Errorf("get node info: received nil response")
+	}
+	defer func() {
+		if r.RawBody() != nil {
+			r.RawBody().Close()
+		}
+	}()
+
 	if r.StatusCode() == 304 {
 		return nil, nil
+	}
+	if err = c.checkResponse(r, path, err); err != nil {
+		return nil, err
 	}
 	hash := sha256.Sum256(r.Body())
 	newBodyHash := hex.EncodeToString(hash[:])
@@ -167,19 +181,6 @@ func (c *Client) GetNodeInfo() (node *NodeInfo, err error) {
 	}
 	c.responseBodyHash = newBodyHash
 	c.nodeEtag = r.Header().Get("ETag")
-	if err = c.checkResponse(r, path, err); err != nil {
-		return nil, err
-	}
-
-	if r != nil {
-		defer func() {
-			if r.RawBody() != nil {
-				r.RawBody().Close()
-			}
-		}()
-	} else {
-		return nil, fmt.Errorf("received nil response")
-	}
 	node = &NodeInfo{
 		Id:   c.NodeId,
 		Type: c.NodeType,
@@ -266,17 +267,9 @@ func (c *Client) GetNodeInfo() (node *NodeInfo, err error) {
 
 	// parse rules and dns
 	for i := range cm.Routes {
-		var matchs []string
-		if _, ok := cm.Routes[i].Match.(string); ok {
-			matchs = strings.Split(cm.Routes[i].Match.(string), ",")
-		} else if _, ok = cm.Routes[i].Match.([]string); ok {
-			matchs = cm.Routes[i].Match.([]string)
-		} else {
-			temp := cm.Routes[i].Match.([]interface{})
-			matchs = make([]string, len(temp))
-			for i := range temp {
-				matchs[i] = temp[i].(string)
-			}
+		matchs, err := parseRouteMatch(cm.Routes[i].Match)
+		if err != nil {
+			return nil, fmt.Errorf("parse route %d match: %w", cm.Routes[i].Id, err)
 		}
 		switch cm.Routes[i].Action {
 		case "block":
@@ -290,6 +283,9 @@ func (c *Client) GetNodeInfo() (node *NodeInfo, err error) {
 				}
 			}
 		case "dns":
+			if len(matchs) == 0 {
+				continue
+			}
 			var domains []string
 			domains = append(domains, matchs...)
 			if matchs[0] != "main" {
@@ -305,8 +301,10 @@ func (c *Client) GetNodeInfo() (node *NodeInfo, err error) {
 	}
 
 	// set interval
-	node.PushInterval = intervalToTime(cm.BaseConfig.PushInterval)
-	node.PullInterval = intervalToTime(cm.BaseConfig.PullInterval)
+	if cm.BaseConfig != nil {
+		node.PushInterval = intervalToTime(cm.BaseConfig.PushInterval)
+		node.PullInterval = intervalToTime(cm.BaseConfig.PullInterval)
+	}
 
 	node.Common = cm
 	// clear
@@ -316,16 +314,61 @@ func (c *Client) GetNodeInfo() (node *NodeInfo, err error) {
 	return node, nil
 }
 
-func intervalToTime(i interface{}) time.Duration {
-	switch reflect.TypeOf(i).Kind() {
-	case reflect.Int:
-		return time.Duration(i.(int)) * time.Second
-	case reflect.String:
-		i, _ := strconv.Atoi(i.(string))
-		return time.Duration(i) * time.Second
-	case reflect.Float64:
-		return time.Duration(i.(float64)) * time.Second
+func parseRouteMatch(match interface{}) ([]string, error) {
+	if match == nil {
+		return nil, nil
+	}
+	switch v := match.(type) {
+	case string:
+		if v == "" {
+			return nil, nil
+		}
+		return strings.Split(v, ","), nil
+	case []string:
+		return v, nil
+	case []interface{}:
+		matchs := make([]string, 0, len(v))
+		for _, item := range v {
+			s, ok := item.(string)
+			if !ok {
+				return nil, fmt.Errorf("unexpected match element type %T", item)
+			}
+			matchs = append(matchs, s)
+		}
+		return matchs, nil
 	default:
-		return time.Duration(reflect.ValueOf(i).Int()) * time.Second
+		return nil, fmt.Errorf("unexpected match type %T", match)
+	}
+}
+
+func intervalToTime(i interface{}) time.Duration {
+	if i == nil {
+		return 0
+	}
+	switch v := i.(type) {
+	case int:
+		return time.Duration(v) * time.Second
+	case int32:
+		return time.Duration(v) * time.Second
+	case int64:
+		return time.Duration(v) * time.Second
+	case float32:
+		return time.Duration(v) * time.Second
+	case float64:
+		return time.Duration(v) * time.Second
+	case string:
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return 0
+		}
+		return time.Duration(n) * time.Second
+	case json.Number:
+		n, err := v.Int64()
+		if err != nil {
+			return 0
+		}
+		return time.Duration(n) * time.Second
+	default:
+		return 0
 	}
 }

@@ -3,9 +3,11 @@ package xray
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/InazumaV/V2bX/api/panel"
 	"github.com/InazumaV/V2bX/conf"
+	"github.com/InazumaV/V2bX/core/xray/app/dispatcher"
 	"github.com/xtls/xray-core/core"
 	"github.com/xtls/xray-core/features/inbound"
 	"github.com/xtls/xray-core/features/outbound"
@@ -72,6 +74,7 @@ func (c *Xray) addOutbound(config *core.OutboundHandlerConfig) error {
 }
 
 func (c *Xray) DelNode(tag string) error {
+	c.cleanupNodeState(tag)
 	err := c.removeInbound(tag)
 	if err != nil {
 		return fmt.Errorf("remove in error: %s", err)
@@ -80,7 +83,32 @@ func (c *Xray) DelNode(tag string) error {
 	if err != nil {
 		return fmt.Errorf("remove out error: %s", err)
 	}
+	delete(c.nodeReportMinTrafficBytes, tag)
 	return nil
+}
+
+func (c *Xray) cleanupNodeState(tag string) {
+	if c.dispatcher == nil {
+		return
+	}
+	prefix := tag + "|"
+	c.users.mapLock.Lock()
+	for email := range c.users.uidMap {
+		if strings.HasPrefix(email, prefix) {
+			delete(c.users.uidMap, email)
+		}
+	}
+	c.users.mapLock.Unlock()
+
+	c.dispatcher.Counter.Delete(tag)
+	c.dispatcher.LinkManagers.Range(func(key, value interface{}) bool {
+		email := key.(string)
+		if strings.HasPrefix(email, prefix) {
+			value.(*dispatcher.LinkManager).CloseAll()
+			c.dispatcher.LinkManagers.Delete(email)
+		}
+		return true
+	})
 }
 
 func (c *Xray) removeInbound(tag string) error {

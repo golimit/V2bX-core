@@ -13,6 +13,7 @@ import (
 type Hysteria2node struct {
 	Hy2server     server.Server
 	Tag           string
+	Auth          *V2bX
 	Logger        *zap.Logger
 	EventLogger   server.EventLogger
 	TrafficLogger server.TrafficLogger
@@ -34,6 +35,7 @@ func (h *Hysteria2) AddNode(tag string, info *panel.NodeInfo, config *conf.Optio
 	}
 	n := Hysteria2node{
 		Tag:    tag,
+		Auth:   newNodeAuth(),
 		Logger: h.Logger,
 		EventLogger: &serverLogger{
 			Tag:    tag,
@@ -50,7 +52,7 @@ func (h *Hysteria2) AddNode(tag string, info *panel.NodeInfo, config *conf.Optio
 	if err != nil {
 		return err
 	}
-	hyconfig.Authenticator = h.Auth
+	hyconfig.Authenticator = n.Auth
 	s, err := server.NewServer(hyconfig)
 	if err != nil {
 		return err
@@ -68,7 +70,11 @@ func (h *Hysteria2) AddNode(tag string, info *panel.NodeInfo, config *conf.Optio
 }
 
 func (h *Hysteria2) DelNode(tag string) error {
-	err := h.Hy2nodes[tag].Hy2server.Close()
+	n, ok := h.Hy2nodes[tag]
+	if !ok {
+		return nil
+	}
+	err := n.Hy2server.Close()
 	if err != nil {
 		return err
 	}

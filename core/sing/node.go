@@ -421,7 +421,19 @@ func (b *Sing) DelNode(tag string) error {
 	if err != nil {
 		return fmt.Errorf("delete inbound error: %s", err)
 	}
-	b.hookServer.counter.Delete(tag)
+	b.cleanupNodeState(tag)
 	delete(b.nodeReportMinTrafficBytes, tag)
 	return nil
+}
+
+func (b *Sing) cleanupNodeState(tag string) {
+	prefix := tag + "|"
+	b.users.mapLock.Lock()
+	for key := range b.users.uidMap {
+		if strings.HasPrefix(key, prefix) {
+			delete(b.users.uidMap, key)
+		}
+	}
+	b.users.mapLock.Unlock()
+	b.hookServer.counter.Delete(tag)
 }

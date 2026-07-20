@@ -123,11 +123,6 @@ func (x *Xray) AddUserTraffic(tag string, report []panel.UserTraffic) {
 }
 
 func (c *Xray) AddUsers(p *vCore.AddUsersParams) (added int, err error) {
-	c.users.mapLock.Lock()
-	defer c.users.mapLock.Unlock()
-	for i := range p.Users {
-		c.users.uidMap[format.UserTag(p.Tag, p.Users[i].Uuid)] = p.Users[i].Id
-	}
 	var users []*protocol.User
 	switch p.NodeInfo.Type {
 	case "vmess":
@@ -148,15 +143,30 @@ func (c *Xray) AddUsers(p *vCore.AddUsersParams) (added int, err error) {
 	if err != nil {
 		return 0, fmt.Errorf("get user manager error: %s", err)
 	}
+	addedEmails := make([]string, 0, len(users))
 	for _, u := range users {
 		mUser, err := u.ToMemoryUser()
 		if err != nil {
+			c.rollbackAddedUsers(man, addedEmails)
 			return 0, err
 		}
 		err = man.AddUser(context.Background(), mUser)
 		if err != nil {
+			c.rollbackAddedUsers(man, addedEmails)
 			return 0, err
 		}
+		addedEmails = append(addedEmails, mUser.Email)
+	}
+	c.users.mapLock.Lock()
+	defer c.users.mapLock.Unlock()
+	for i := range p.Users {
+		c.users.uidMap[format.UserTag(p.Tag, p.Users[i].Uuid)] = p.Users[i].Id
 	}
 	return len(users), nil
+}
+
+func (c *Xray) rollbackAddedUsers(man proxy.UserManager, emails []string) {
+	for _, email := range emails {
+		_ = man.RemoveUser(context.Background(), email)
+	}
 }

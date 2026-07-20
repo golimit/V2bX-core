@@ -10,7 +10,6 @@ var _ vCore.Core = (*Hysteria2)(nil)
 
 type Hysteria2 struct {
 	Hy2nodes map[string]Hysteria2node
-	Auth     *V2bX
 	Logger   *zap.Logger
 }
 
@@ -29,10 +28,7 @@ func New(c *conf.CoreConfig) (vCore.Core, error) {
 	}
 	return &Hysteria2{
 		Hy2nodes: make(map[string]Hysteria2node),
-		Auth: &V2bX{
-			usersMap: make(map[string]int),
-		},
-		Logger: log,
+		Logger:   log,
 	}, nil
 }
 

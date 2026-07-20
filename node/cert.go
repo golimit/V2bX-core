@@ -101,7 +101,8 @@ func generateSelfSslCertificate(domain, certPath, keyPath string) error {
 	if err != nil {
 		return err
 	}
-	f, err = os.OpenFile(keyPath, os.O_CREATE|os.O_RDWR, 0644)
+	f.Close()
+	f, err = os.OpenFile(keyPath, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return err
 	}

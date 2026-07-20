@@ -59,7 +59,7 @@ func NewLego(config *conf.CertConfig) (*Lego, error) {
 
 func checkPath(p string) error {
 	if !file.IsExist(path.Dir(p)) {
-		err := os.MkdirAll(path.Dir(p), 0755)
+		err := os.MkdirAll(path.Dir(p), 0700)
 		if err != nil {
 			return fmt.Errorf("create dir error: %s", err)
 		}
@@ -159,7 +159,7 @@ func (l *Lego) writeCert(certificates *certificate.Resource) error {
 	if err != nil {
 		return fmt.Errorf("check path error: %s", err)
 	}
-	err = os.WriteFile(l.parseParams(l.config.KeyFile), certificates.PrivateKey, 0644)
+	err = os.WriteFile(l.parseParams(l.config.KeyFile), certificates.PrivateKey, 0600)
 	if err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (u *User) Save(path string) error {
 		return fmt.Errorf("check path error: %s", err)
 	}
 	u.KeyEncoded, _ = EncodePrivate(u.key.(*ecdsa.PrivateKey))
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
