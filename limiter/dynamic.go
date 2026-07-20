@@ -1,38 +1,33 @@
 package limiter
 
-import (
-	"time"
-
-	"github.com/InazumaV/V2bX/api/panel"
-	"github.com/InazumaV/V2bX/common/format"
-)
-
-func (l *Limiter) AddDynamicSpeedLimit(tag string, userInfo *panel.UserInfo, limitNum int, expire int64) error {
-	userLimit := &UserLimitInfo{
-		DynamicSpeedLimit: limitNum,
-		ExpireTime:        time.Now().Add(time.Duration(expire) * time.Second).Unix(),
+// determineSpeedLimit returns the minimum non-zero rate (Mbps).
+// Zero means "unlimited" on that side and is ignored.
+func determineSpeedLimit(limit1, limit2 int) int {
+	if limit1 == 0 {
+		return limit2
 	}
-	l.UserLimitInfo.Store(format.UserTag(tag, userInfo.Uuid), userLimit)
-	return nil
+	if limit2 == 0 {
+		return limit1
+	}
+	if limit1 < limit2 {
+		return limit1
+	}
+	return limit2
 }
 
-// determineSpeedLimit returns the minimum non-zero rate
-func determineSpeedLimit(limit1, limit2 int) (limit int) {
-	if limit1 == 0 || limit2 == 0 {
-		if limit1 > limit2 {
-			return limit1
-		} else if limit1 < limit2 {
-			return limit2
-		} else {
-			return 0
-		}
-	} else {
-		if limit1 > limit2 {
-			return limit2
-		} else if limit1 < limit2 {
-			return limit1
-		} else {
-			return limit1
-		}
+func (u *UserLimitInfo) effectiveUserLimit(now int64) (speedLimit int, cleared bool) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	if u.ExpireTime != 0 && u.ExpireTime < now {
+		u.DynamicSpeedLimit = 0
+		u.ExpireTime = 0
+		cleared = true
 	}
+	return determineSpeedLimit(u.SpeedLimit, u.DynamicSpeedLimit), cleared
+}
+
+func (u *UserLimitInfo) snapshotDevice() (uid, deviceLimit int) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	return u.UID, u.DeviceLimit
 }

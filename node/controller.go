@@ -3,6 +3,7 @@ package node
 import (
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/InazumaV/V2bX/api/panel"
 	"github.com/InazumaV/V2bX/common/task"
@@ -12,12 +13,63 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// dynamicTraffic tracks per-user accumulated traffic for dynamic speed limit.
+type dynamicTraffic struct {
+	mu   sync.Mutex
+	data map[string]int64
+}
+
+func newDynamicTraffic() *dynamicTraffic {
+	return &dynamicTraffic{data: make(map[string]int64)}
+}
+
+func (t *dynamicTraffic) add(uuid string, bytes int64) {
+	if t == nil || uuid == "" || bytes == 0 {
+		return
+	}
+	t.mu.Lock()
+	t.data[uuid] += bytes
+	t.mu.Unlock()
+}
+
+func (t *dynamicTraffic) remove(uuid string) {
+	if t == nil {
+		return
+	}
+	t.mu.Lock()
+	delete(t.data, uuid)
+	t.mu.Unlock()
+}
+
+func (t *dynamicTraffic) reset() {
+	if t == nil {
+		return
+	}
+	t.mu.Lock()
+	t.data = make(map[string]int64)
+	t.mu.Unlock()
+}
+
+// snapshot returns a copy of current accumulators.
+func (t *dynamicTraffic) snapshot() map[string]int64 {
+	if t == nil {
+		return nil
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	out := make(map[string]int64, len(t.data))
+	for k, v := range t.data {
+		out[k] = v
+	}
+	return out
+}
+
 type Controller struct {
 	server                    vCore.Core
 	apiClient                 *panel.Client
 	tag                       string
 	limiter                   *limiter.Limiter
-	traffic                   map[string]int64
+	traffic                   *dynamicTraffic
 	userList                  []panel.UserInfo
 	aliveMap                  map[int]int
 	info                      *panel.NodeInfo
@@ -63,6 +115,10 @@ func (c *Controller) Start() error {
 		c.tag = c.buildNodeTag(node)
 	} else {
 		c.tag = c.Options.Name
+	}
+
+	if err = c.LimitConfig.ValidateDynamicSpeedLimit(); err != nil {
+		return fmt.Errorf("invalid dynamic speed limit config: %s", err)
 	}
 
 	// add limiter

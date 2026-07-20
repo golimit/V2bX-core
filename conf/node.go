@@ -40,10 +40,10 @@ func (n *NodeConfig) UnmarshalJSON(data []byte) (err error) {
 		return err
 	}
 	if len(rn.Include) != 0 {
-		file, _ := strings.CutPrefix(rn.Include, ":")
-		switch file {
-		case "http", "https":
-			rsp, err := http.Get(file)
+		include := rn.Include
+		switch {
+		case strings.HasPrefix(include, "http://") || strings.HasPrefix(include, "https://"):
+			rsp, err := http.Get(include)
 			if err != nil {
 				return err
 			}
@@ -53,7 +53,9 @@ func (n *NodeConfig) UnmarshalJSON(data []byte) (err error) {
 				return fmt.Errorf("open include file error: %s", err)
 			}
 		default:
-			f, err := os.Open(rn.Include)
+			// trim optional "file:" prefix
+			path := strings.TrimPrefix(include, "file:")
+			f, err := os.Open(path)
 			if err != nil {
 				return fmt.Errorf("open include file error: %s", err)
 			}
@@ -126,13 +128,51 @@ func (o *Options) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+	// Compat aliases for older sample configs
+	var alias struct {
+		MinReportTraffic int64 `json:"MinReportTraffic"`
+	}
+	_ = json.Unmarshal(data, &alias)
+	if o.ReportMinTraffic == 0 && alias.MinReportTraffic != 0 {
+		o.ReportMinTraffic = alias.MinReportTraffic
+	}
 	switch o.Core {
 	case "xray":
 		o.XrayOptions = NewXrayOptions()
 		return json.Unmarshal(data, o.XrayOptions)
 	case "sing":
 		o.SingOptions = NewSingOptions()
-		return json.Unmarshal(data, o.SingOptions)
+		if err := json.Unmarshal(data, o.SingOptions); err != nil {
+			return err
+		}
+		var singAlias struct {
+			TCPFastOpen  *bool `json:"TCPFastOpen"`
+			SniffEnabled *bool `json:"SniffEnabled"`
+		}
+		_ = json.Unmarshal(data, &singAlias)
+		// Only apply alias when canonical keys were absent (zero-value ambiguity:
+		// if EnableTFO was explicitly false we cannot tell; alias fills when
+		// canonical decode left defaults and alias is set).
+		if singAlias.TCPFastOpen != nil {
+			// Prefer explicit legacy key when present alongside missing EnableTFO in raw
+			var raw map[string]json.RawMessage
+			if json.Unmarshal(data, &raw) == nil {
+				if _, has := raw["EnableTFO"]; !has {
+					o.SingOptions.TCPFastOpen = *singAlias.TCPFastOpen
+				}
+				if _, has := raw["EnableSniff"]; !has && singAlias.SniffEnabled != nil {
+					o.SingOptions.SniffEnabled = *singAlias.SniffEnabled
+				}
+			}
+		} else if singAlias.SniffEnabled != nil {
+			var raw map[string]json.RawMessage
+			if json.Unmarshal(data, &raw) == nil {
+				if _, has := raw["EnableSniff"]; !has {
+					o.SingOptions.SniffEnabled = *singAlias.SniffEnabled
+				}
+			}
+		}
+		return nil
 	case "hysteria2":
 		o.RawOptions = data
 		return nil

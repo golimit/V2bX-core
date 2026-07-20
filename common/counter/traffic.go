@@ -72,3 +72,17 @@ func (c *TrafficCounter) Tx(uuid string, n int) {
 	cts := c.GetCounter(uuid)
 	cts.UpCounter.Add(int64(n))
 }
+
+// Add restores previously swapped traffic onto the counter (e.g. after a failed report).
+func (c *TrafficCounter) Add(uuid string, up, down int64) {
+	if up == 0 && down == 0 {
+		return
+	}
+	cts := c.GetCounter(uuid)
+	if up != 0 {
+		cts.UpCounter.Add(up)
+	}
+	if down != 0 {
+		cts.DownCounter.Add(down)
+	}
+}

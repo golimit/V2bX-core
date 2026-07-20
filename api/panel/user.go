@@ -90,28 +90,31 @@ func (c *Client) GetUserList() ([]UserInfo, error) {
 	return userlist.Users, nil
 }
 
-// GetUserAlive will fetch the alive_ip count for users
+// GetUserAlive will fetch the alive_ip count for users.
+// On failure it returns an error and does not replace the previous AliveMap with an empty one.
 func (c *Client) GetUserAlive() (map[int]int, error) {
-	c.AliveMap = &AliveMap{}
 	const path = "/api/v1/server/UniProxy/alivelist"
 	r, err := c.client.R().
 		ForceContentType("application/json").
 		Get(path)
-	if err != nil || r.StatusCode() >= 399 {
-		c.AliveMap.Alive = make(map[int]int)
-		return c.AliveMap.Alive, nil
+	if err != nil {
+		return nil, fmt.Errorf("get user alive list error: %w", err)
 	}
 	if r == nil || r.RawResponse == nil {
-		fmt.Printf("received nil response or raw response")
-		c.AliveMap.Alive = make(map[int]int)
-		return c.AliveMap.Alive, nil
+		return nil, fmt.Errorf("get user alive list: received nil response")
 	}
 	defer r.RawResponse.Body.Close()
-	if err := json.Unmarshal(r.Body(), c.AliveMap); err != nil {
-		fmt.Printf("unmarshal user alive list error: %s", err)
-		c.AliveMap.Alive = make(map[int]int)
+	if r.StatusCode() >= 399 {
+		return nil, fmt.Errorf("get user alive list: status %d", r.StatusCode())
 	}
-
+	aliveMap := &AliveMap{}
+	if err := json.Unmarshal(r.Body(), aliveMap); err != nil {
+		return nil, fmt.Errorf("unmarshal user alive list error: %w", err)
+	}
+	if aliveMap.Alive == nil {
+		aliveMap.Alive = make(map[int]int)
+	}
+	c.AliveMap = aliveMap
 	return c.AliveMap.Alive, nil
 }
 
@@ -145,11 +148,5 @@ func (c *Client) ReportNodeOnlineUsers(data *map[int][]string) error {
 		SetBody(data).
 		ForceContentType("application/json").
 		Post(path)
-	err = c.checkResponse(r, path, err)
-
-	if err != nil {
-		return nil
-	}
-
-	return nil
+	return c.checkResponse(r, path, err)
 }

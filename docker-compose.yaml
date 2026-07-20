@@ -4,12 +4,21 @@ services:
     container_name: v2bx
     network_mode: host
     restart: always
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: '1024m'
+    stop_grace_period: 30s
+    cpus: 1.0
+    mem_limit: 1024m
     volumes:
       - ./v2bx_config:/etc/V2bX
     environment:
       - TZ=Asia/Shanghai
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "pidof", "V2bX"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

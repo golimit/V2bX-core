@@ -133,6 +133,14 @@ func (s *Selector) GetUserTrafficSlice(tag string, reset bool) ([]panel.UserTraf
 	return t.(Core).GetUserTrafficSlice(tag, reset)
 }
 
+func (s *Selector) AddUserTraffic(tag string, traffic []panel.UserTraffic) {
+	t, e := s.nodes.Load(tag)
+	if !e {
+		return
+	}
+	t.(Core).AddUserTraffic(tag, traffic)
+}
+
 func (s *Selector) DelUsers(users []panel.UserInfo, tag string, info *panel.NodeInfo) error {
 	t, e := s.nodes.Load(tag)
 	if !e {

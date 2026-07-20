@@ -144,14 +144,19 @@ func (b *Sing) GetUserTrafficSlice(tag string, reset bool) ([]panel.UserTraffic,
 		c.Counters.Range(func(key, value interface{}) bool {
 			uuid := key.(string)
 			traffic := value.(*counter.TrafficStorage)
-			up := traffic.UpCounter.Load()
-			down := traffic.DownCounter.Load()
+			var up, down int64
+			if reset {
+				up = traffic.UpCounter.Swap(0)
+				down = traffic.DownCounter.Swap(0)
+			} else {
+				up = traffic.UpCounter.Load()
+				down = traffic.DownCounter.Load()
+			}
 			if up+down > b.nodeReportMinTrafficBytes[tag] {
-				if reset {
-					traffic.UpCounter.Store(0)
-					traffic.DownCounter.Store(0)
-				}
 				if b.users.uidMap[uuid] == 0 {
+					if reset && (up != 0 || down != 0) {
+						// invalid user: drop counters, do not report
+					}
 					c.Delete(uuid)
 					return true
 				}
@@ -160,6 +165,10 @@ func (b *Sing) GetUserTrafficSlice(tag string, reset bool) ([]panel.UserTraffic,
 					Upload:   up,
 					Download: down,
 				})
+			} else if reset && (up != 0 || down != 0) {
+				// below min threshold: put back so it can accumulate
+				traffic.UpCounter.Add(up)
+				traffic.DownCounter.Add(down)
 			}
 			return true
 		})
@@ -169,6 +178,30 @@ func (b *Sing) GetUserTrafficSlice(tag string, reset bool) ([]panel.UserTraffic,
 		return trafficSlice, nil
 	}
 	return nil, nil
+}
+
+func (b *Sing) AddUserTraffic(tag string, report []panel.UserTraffic) {
+	if len(report) == 0 {
+		return
+	}
+	v, ok := b.hookServer.counter.Load(tag)
+	if !ok {
+		return
+	}
+	c := v.(*counter.TrafficCounter)
+	b.users.mapLock.RLock()
+	defer b.users.mapLock.RUnlock()
+	uidToUUID := make(map[int]string, len(b.users.uidMap))
+	for uuid, uid := range b.users.uidMap {
+		uidToUUID[uid] = uuid
+	}
+	for i := range report {
+		uuid, ok := uidToUUID[report[i].UID]
+		if !ok {
+			continue
+		}
+		c.Add(uuid, report[i].Upload, report[i].Download)
+	}
 }
 
 type UserDeleter interface {
