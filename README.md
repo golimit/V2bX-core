@@ -60,7 +60,7 @@ docker pull ghcr.io/golimit/v2bx:dev
 
 ```bash
 # 下载配置文件
-wget https://raw.githubusercontent.com/golimit/V2bx-core/dev/docker-compose.yaml
+wget https://raw.githubusercontent.com/golimit/V2bX/dev/docker-compose.yaml
 
 # 编辑配置
 vi v2bx_config/config.json
@@ -102,7 +102,7 @@ GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 
 git clone -b v1.13.14-mod git@github.com:golimit/sing-box_mod.git sing-box_mod
 git clone -b main git@github.com:golimit/xray-core.git xray-core
 # xray-core 建议再切到 go.mod 锁定的 commit：
-#   cd xray-core && git checkout 63db1dc9e9e2 && git switch -c v2bx-pin
+#   cd xray-core && git checkout b17a88f9b46d && git switch -c v2bx-pin
 git clone -b main git@github.com:golimit/sing-vmess.git sing-vmess
 ```
 
@@ -111,7 +111,7 @@ git clone -b main git@github.com:golimit/sing-vmess.git sing-vmess
 ```go
 // go.mod
 replace github.com/sagernet/sing-box v1.13.14 => ./sing-box_mod
-replace github.com/xtls/xray-core v1.251202.0 => ./xray-core
+replace github.com/xtls/xray-core v1.260711.0 => ./xray-core
 replace github.com/sagernet/sing-vmess => ./sing-vmess
 ```
 
@@ -146,10 +146,10 @@ replace github.com/sagernet/sing-vmess => ./sing-vmess
 
 ## 免责声明
 
-* 此项目用于本人自用，因此本人不能保证向后兼容性。
-* 由于本人能力有限，不能保证所有功能的可用性，如果出现问题请在Issues反馈。
-* 本人不对任何人使用本项目造成的任何后果承担责任。
-* 本人比较多变，因此本项目可能会随想法或思路的变动随性更改项目结构或大规模重构代码，若不能接受请勿使用。
+* 本项目由各大 AI 老师不同程度调教而成，属于典型的 vibe coding 产物。
+* 代码风格、架构取舍乃至实现细节，均可能随对话灵感与模型口味而漂移，不保证向后兼容。
+* 功能可用性不作承诺；若踩坑，欢迎在 Issues 反馈，但请做好自行排查的心理准备。
+* 本人不对任何人使用本项目造成的任何后果承担责任。若无法接受上述不确定性，请勿使用。
 
 ## Thanks
 
