@@ -87,26 +87,39 @@ docker-compose up -d
 GOEXPERIMENT=jsonv2 go build -v -o build_assets/V2bX -tags "sing xray hysteria2 with_quic with_grpc with_utls with_wireguard with_acme with_gvisor" -trimpath -ldflags "-X 'github.com/InazumaV/V2bX/cmd.version=$version' -s -w -buildid="
 ```
 
-### 本地依赖：sing-box_mod
+### 本地依赖（golimit 定制内核）
 
-本项目的 sing 内核依赖定制仓库 [golimit/sing-box_mod](https://github.com/golimit/sing-box_mod)（基于官方 sing-box，增加 V2bX 用户增删等接口）。
+`go.mod` 底部 `replace` 指向的定制依赖如下，均**不作为 submodule 提交**，而是 clone 到本仓库根目录，并由 `.gitignore` 忽略，便于本地联调、各自独立 push。
 
-该仓库**不作为 git submodule 提交**，而是 clone 到本项目根目录下的 `sing-box_mod/`，并由 `.gitignore` 忽略，便于本地联调、独立提交推送。
+| 本地目录 | 远程仓库 | `go.mod` replace | 用途 |
+|----------|----------|------------------|------|
+| `sing-box_mod/` | [golimit/sing-box_mod](https://github.com/golimit/sing-box_mod) | `sagernet/sing-box` → `golimit/sing-box_mod` | sing 内核（含 V2bX 用户增删等） |
+| `xray-core/` | [golimit/xray-core](https://github.com/golimit/xray-core) | `xtls/xray-core` → `golimit/xray-core` | xray 内核 |
+| `sing-vmess/` | [golimit/sing-vmess](https://github.com/golimit/sing-vmess) | `wyx2685/sing-vmess` → `golimit/sing-vmess` | VMess/VLESS 协议库（fork） |
 
 ```bash
-# 克隆（默认使用与 go.mod replace 对齐的分支）
+# 一次性克隆（分支/提交与当前 go.mod 对齐）
 git clone -b v1.13.14-mod git@github.com:golimit/sing-box_mod.git sing-box_mod
-
-# 本地开发时，临时把 go.mod 的 replace 改为本地路径：
-# replace github.com/sagernet/sing-box v1.13.14 => ./sing-box_mod
-#
-# 改完 sing-box_mod 后：
-# 1. 在 sing-box_mod/ 内 commit & push
-# 2. 恢复/更新 go.mod 的远程 replace 伪版本（指向新 commit）
-# 3. 在本仓库执行 go mod tidy 并提交 go.mod / go.sum
+git clone -b main git@github.com:golimit/xray-core.git xray-core
+# xray-core 建议再切到 go.mod 锁定的 commit：
+#   cd xray-core && git checkout 63db1dc9e9e2 && git switch -c v2bx-pin
+git clone -b dev git@github.com:golimit/sing-vmess.git sing-vmess
 ```
 
-生产构建仍使用 `go.mod` 中的远程 `replace`，不依赖本地目录。
+**本地联调（临时改 replace，勿把本地路径提交进生产 CI）：**
+
+```go
+// go.mod
+replace github.com/sagernet/sing-box v1.13.14 => ./sing-box_mod
+replace github.com/xtls/xray-core v1.251202.0 => ./xray-core
+replace github.com/wyx2685/sing-vmess v0.0.0-20250723121437-95d5ab59ff92 => ./sing-vmess
+```
+
+说明：
+
+- 生产/CI 仍使用远程伪版本 `replace`，不依赖本地目录。
+- 改完子仓库后：在子仓库内 commit & push → 更新本仓库 `go.mod`/`go.sum` 的远程 replace → 提交本仓库。
+- 当前构建实际走的 VMess/VLESS 库是 `github.com/sagernet/sing-vmess`（经 sing-box 间接依赖）。`golimit/sing-vmess` 的 module path 仍为 `github.com/wyx2685/sing-vmess`；若要让本地 `sing-vmess/` 生效到 sing 数据面，需额外把 `github.com/sagernet/sing-vmess` replace 到本地（并注意 module path 对齐），或先在 `sing-box_mod/go.mod` 里做同样的本地 replace。
 
 ### Go 版本说明
 
@@ -147,4 +160,6 @@ git clone -b v1.13.14-mod git@github.com:golimit/sing-box_mod.git sing-box_mod
 * [Air-Universe](https://github.com/crossfw/Air-Universe)
 * [XrayR](https://github.com/XrayR/XrayR)
 * [sing-box](https://github.com/SagerNet/sing-box)
-* [golimit/sing-box_mod](https://github.com/golimit/sing-box_mod) - 本项目使用的 sing-box 定制内核
+* [golimit/sing-box_mod](https://github.com/golimit/sing-box_mod) - sing 定制内核
+* [golimit/xray-core](https://github.com/golimit/xray-core) - xray 定制内核
+* [golimit/sing-vmess](https://github.com/golimit/sing-vmess) - VMess/VLESS 协议库 fork
