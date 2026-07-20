@@ -117,7 +117,7 @@ replace github.com/sagernet/sing-vmess => ./sing-vmess
 
 说明：
 
-- 生产/CI 仍使用远程伪版本 `replace`，不依赖本地目录。
+- 生产/CI 仍使用远程 `replace`，不依赖本地目录。`sing-box_mod` 用 tag 形如 `v1.13.14-mod.N` 钉版本（与官方 1.13.14 对齐，避免 Go 自动生成看起来像 1.13.15 的伪版本）。
 - 改完子仓库后：在子仓库内 commit & push → 更新本仓库 `go.mod`/`go.sum` 的远程 replace → 提交本仓库。
 - `golimit/sing-vmess` 为兼容 drop-in replace，**go.mod 内 module path 仍声明为** `github.com/sagernet/sing-vmess`（代码从 [golimit/sing-vmess](https://github.com/golimit/sing-vmess) 拉取）。这是 Go 模块机制要求：同一份代码不能同时作为两个 module path。
 - `sing-box_mod` 内也有同样的 `sing-vmess` replace，便于单独编译该内核。
