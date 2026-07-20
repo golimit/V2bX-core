@@ -476,8 +476,8 @@ github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db/go.mod h1:/XxbfmMg8l
 github.com/golang/snappy v0.0.1/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/golang/snappy v0.0.3/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/golang/snappy v0.0.4/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
-github.com/golimit/sing-box_mod v1.13.14-mod.1 h1:T8XKqzs74Lv4ZM+Ab4S7mYtY0xZb5pBXOeRkpCf+f70=
-github.com/golimit/sing-box_mod v1.13.14-mod.1/go.mod h1:r/CJYFBhcFJcsm9mxgW7gUocYUiTVBtu6t9CrGSLU7E=
+github.com/golimit/sing-box_mod v1.13.14-mod.2 h1:yMaPG3hw4DkljnE7/ApClkqPQqkk53FPWSBhu17+88o=
+github.com/golimit/sing-box_mod v1.13.14-mod.2/go.mod h1:r/CJYFBhcFJcsm9mxgW7gUocYUiTVBtu6t9CrGSLU7E=
 github.com/golimit/sing-vmess v0.0.0-20260720132617-7875b864a9ba h1:VLGQFRGyHptovYabI7n8z8ByKxtrD4zZSTuYhwRksOs=
 github.com/golimit/sing-vmess v0.0.0-20260720132617-7875b864a9ba/go.mod h1:TpxVWtOF+8/g02ycqSiG95fTjJJ4buOYo1EOORZqcb4=
 github.com/golimit/xray-core v0.0.0-20251202200223-63db1dc9e9e2 h1:y8K9LVi+YJQ/1VvS01xM2P0wR29dw/fF57Hlht6j9Ls=

@@ -357,7 +357,7 @@ require (
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
 
-replace github.com/sagernet/sing-box v1.13.14 => github.com/golimit/sing-box_mod v1.13.14-mod.1
+replace github.com/sagernet/sing-box v1.13.14 => github.com/golimit/sing-box_mod v1.13.14-mod.2
 
 replace github.com/xtls/xray-core v1.251202.0 => github.com/golimit/xray-core v0.0.0-20251202200223-63db1dc9e9e2
 
